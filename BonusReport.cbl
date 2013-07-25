@@ -93,6 +93,7 @@
              05                         PIC X(40)    VALUE SPACES.
       *****************************************************************
        PROCEDURE DIVISION.
+      *MAIN MODULE THAT IS RUN TO PERFORM THE OPERATIONS.
        100-MAIN-MOD.
          PERFORM 800-OPEN-FILES-MOD
          PERFORM 200-GET-DATE
@@ -108,6 +109,7 @@
          STOP RUN.
       *****************************************************************
        200-GET-DATE.
+      *MODULE THAT GETS THE DATE TO BE ADDED IN THE REPORT.
          DISPLAY "PLEASE ENTER TODAY'S DATE(YYYYMMDD): "
          ACCEPT WA-TODAY-DATE
                
@@ -116,6 +118,8 @@
          MOVE WA-IN-YR  TO PH-HEAD-YR.
       *****************************************************************
        300-CALC-MOD.
+      *MODULE THAT DECIDES WHEN TO BREAK THE BONUS REPORTS BASE ON TERR
+      *AND OFFICE NUMBERS. IT ALWAYS WRITES THE BONUS RECORD.
          EVALUATE TRUE
            WHEN WA-FIRST-RECORD = 'YES'
              MOVE OFFICE-NO-IN TO WA-OLD-OFFICE-NO
@@ -130,6 +134,39 @@
              PERFORM 600-OFFICE-BREAK
          END-EVALUATE
          
+         PERFORM 700-WRITE-BONUS-RECORD.
+      *****************************************************************
+      *MODULE THAT PRINTS THE HEADING OF THE REPORTS.
+       400-HEADING-MOD.
+         ADD 1 TO WA-PAGE-CTR
+         MOVE WA-PAGE-CTR       TO PH-HEAD-PAGE
+         MOVE WA-OLD-TERR-NO    TO TH-TERR-NO
+         MOVE WA-OLD-OFFICE-NO  TO OH-OFFICE-NO
+         WRITE PAYROLL-BONUS-RECORD FROM PAGE-HEADING
+             AFTER ADVANCING PAGE
+         WRITE PAYROLL-BONUS-RECORD FROM TERR-HEADING
+             AFTER ADVANCING 2 LINES
+         WRITE PAYROLL-BONUS-RECORD FROM OFFICE-HEADING
+             AFTER ADVANCING 2 LINES
+         WRITE PAYROLL-BONUS-RECORD FROM EMP-HEADING
+             AFTER ADVANCING 2 LINES.
+      *****************************************************************
+      *MODULE THAT CALLS THE OFFICE BREAK AND SETS THE NEW TERR NO.
+       500-TERR-BREAK.
+         MOVE TERR-NO-IN TO WA-OLD-TERR-NO
+         PERFORM 600-OFFICE-BREAK.
+      *****************************************************************
+      *MODULE THAT ADDS A HEADING WHEN THE TERR NEW IS NEW
+      *AND SETS THE NEW OFFICE NO.
+       600-OFFICE-BREAK.
+         MOVE OFFICE-NO-IN TO WA-OLD-OFFICE-NO
+         IF TERR-NO-IN = WA-OLD-TERR-NO
+            PERFORM 400-HEADING-MOD
+         END-IF.
+      *****************************************************************
+      *MODULE THAT IS USED TO WRITE NEW BONUS RECORD. 
+      *CHECKS FOR HIRE-DATE.
+       700-WRITE-BONUS-RECORD.
          MOVE EMPNAME-IN   TO BIL-EMPNAME
          
          IF HIRE-DATE-YR-IN < WC-YEAR-AFTER
@@ -151,34 +188,12 @@
          WRITE PAYROLL-BONUS-RECORD FROM BONUS-INFO-LINE
            AFTER ADVANCING 2 LINES.
       *****************************************************************
-       400-HEADING-MOD.
-         ADD 1 TO WA-PAGE-CTR
-         MOVE WA-PAGE-CTR       TO PH-HEAD-PAGE
-         MOVE WA-OLD-TERR-NO    TO TH-TERR-NO
-         MOVE WA-OLD-OFFICE-NO  TO OH-OFFICE-NO
-         WRITE PAYROLL-BONUS-RECORD FROM PAGE-HEADING
-             AFTER ADVANCING PAGE
-         WRITE PAYROLL-BONUS-RECORD FROM TERR-HEADING
-             AFTER ADVANCING 2 LINES
-         WRITE PAYROLL-BONUS-RECORD FROM OFFICE-HEADING
-             AFTER ADVANCING 2 LINES
-         WRITE PAYROLL-BONUS-RECORD FROM EMP-HEADING
-             AFTER ADVANCING 2 LINES.
-      *****************************************************************
-       500-TERR-BREAK.
-         MOVE TERR-NO-IN TO WA-OLD-TERR-NO
-         PERFORM 600-OFFICE-BREAK.
-      *****************************************************************
-       600-OFFICE-BREAK.
-         MOVE OFFICE-NO-IN TO WA-OLD-OFFICE-NO
-         IF TERR-NO-IN = WA-OLD-TERR-NO
-            PERFORM 400-HEADING-MOD
-         END-IF.
-      *****************************************************************
+      *MODULE THAT IS USED TO OPEN THE FILES TO BE USED.
        800-OPEN-FILES-MOD.
          OPEN    INPUT  PAYROLL-MASTER
                  OUTPUT PAYROLL-OUT.
       *****************************************************************
+      *MODULE THAT IS USED TO CLOSE THE FILES THAT ARE USED.
        900-CLOSE-FILES-MOD.
          CLOSE   PAYROLL-MASTER
                  PAYROLL-OUT.
